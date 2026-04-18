@@ -169,3 +169,14 @@ function showMultiWallet() {
     "\nLTC: " + data.ltc +
     "\nSOL: " + data.sol;
 }
+function showNotification(text, color="#22c55e") {
+  const box = document.getElementById("notify");
+
+  box.innerText = text;
+  box.style.background = color;
+  box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+  }, 3000);
+}
