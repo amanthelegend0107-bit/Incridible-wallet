@@ -155,3 +155,17 @@ function trackWallet() {
 
   }, 5000);
 }
+function showMultiWallet() {
+  const data = JSON.parse(localStorage.getItem("multiWallet"));
+
+  if (!data) return;
+
+  document.getElementById("address").innerText =
+    "ETH: " + data.eth;
+
+  document.getElementById("receiveAddress").innerText =
+    "ETH: " + data.eth +
+    "\nBTC: " + data.btc +
+    "\nLTC: " + data.ltc +
+    "\nSOL: " + data.sol;
+}
