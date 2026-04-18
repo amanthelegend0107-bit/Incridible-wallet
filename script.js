@@ -1,6 +1,11 @@
+// Connect to real Ethereum network
 const provider = new ethers.providers.JsonRpcProvider(
   "https://rpc.ankr.com/eth"
-);let wallet;
+);
+
+let wallet;
+
+// CREATE WALLET
 async function createWallet() {
   wallet = ethers.Wallet.createRandom();
 
@@ -12,11 +17,13 @@ async function createWallet() {
   document.getElementById("address").innerText =
     "Address: " + wallet.address;
 
+  // Encrypt and save
   const encrypted = await wallet.encrypt("1234");
-
   localStorage.setItem("wallet", encrypted);
 }
-async function loadWallet() 
+
+// LOAD WALLET
+async function loadWallet() {
   const encrypted = localStorage.getItem("wallet");
 
   wallet = await ethers.Wallet.fromEncryptedJson(
@@ -26,4 +33,16 @@ async function loadWallet()
 
   document.getElementById("address").innerText =
     "Address: " + wallet.address;
+
+  getBalance();
+}
+
+// GET REAL BALANCE
+async function getBalance() {
+  const balance = await provider.getBalance(wallet.address);
+
+  const eth = ethers.utils.formatEther(balance);
+
+  document.getElementById("balance").innerText =
+    "Balance: " + eth + " ETH";
 }
