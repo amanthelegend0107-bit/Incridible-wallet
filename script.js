@@ -15,3 +15,14 @@ async function createWallet() {
 
   localStorage.setItem("wallet", encrypted);
 }
+async function loadWallet() 
+  const encrypted = localStorage.getItem("wallet");
+
+  wallet = await ethers.Wallet.fromEncryptedJson(
+    encrypted,
+    "1234"
+  );
+
+  document.getElementById("address").innerText =
+    "Address: " + wallet.address;
+}
