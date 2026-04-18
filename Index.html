@@ -4,11 +4,43 @@
   <title>My Wallet</title>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+
+  <style>
+    body {
+      background: black;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 5px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 8px;
+      border: none;
+      background: #22c55e;
+      color: white;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
-<body style="background:black;color:white;text-align:center;font-family:sans-serif">
+<body>
 
-<h2>My Wallet</h2>
+<h2>💼 My Wallet</h2>
 
 <button onclick="createWallet()">Create Wallet</button>
 <button onclick="loadWallet()">Load Wallet</button>
@@ -16,6 +48,23 @@
 <p id="seed"></p>
 <p id="address"></p>
 <p id="balance">Balance: 0 ETH</p>
+
+<div id="status">Ready</div>
+
+<hr>
+
+<h3>Send ETH</h3>
+
+<input id="to" placeholder="Receiver address">
+<input id="amount" placeholder="Amount in ETH">
+
+<button onclick="send()">Send</button>
+
+<hr>
+
+<h3>Receive</h3>
+<p>Share this address:</p>
+<p id="receiveAddress"></p>
 
 <script src="script.js"></script>
 
