@@ -1,5 +1,6 @@
-let wallet;
-
+const provider = new ethers.providers.JsonRpcProvider(
+  "https://rpc.ankr.com/eth"
+);let wallet;
 async function createWallet() {
   wallet = ethers.Wallet.createRandom();
 
