@@ -178,5 +178,37 @@ function showNotification(text, color="#22c55e") {
 
   setTimeout(() => {
     box.style.display = "none";
-  }, 3000);
+  }, function addTx(type, amount) {
+  let history = JSON.parse(localStorage.getItem("txHistory")) || [];
+
+  const tx = {
+    type,
+    amount,
+    time: new Date().toLocaleString()
+  };
+
+  history.unshift(tx);
+
+  localStorage.setItem("txHistory", JSON.stringify(history));
+
+  showHistory();
+}
+
+function showHistory() {
+  const history = JSON.parse(localStorage.getItem("txHistory")) || [];
+  const box = document.getElementById("history");
+
+  box.innerHTML = "";
+
+  history.slice(0, 10).forEach(tx => {
+    const div = document.createElement("div");
+
+    div.innerText =
+      (tx.type === "receive" ? "💰 Received $" : "📤 Sent $") +
+      tx.amount + " • " + tx.time;
+
+    div.style.margin = "5px";
+
+    box.appendChild(div);
+  });
 }
