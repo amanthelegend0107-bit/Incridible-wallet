@@ -3,6 +3,7 @@ const provider = new ethers.providers.JsonRpcProvider(
 );
 
 let wallet;
+let walletData;
 let lastBalance = 0;
 let ethPrice = 0;
 
@@ -15,23 +16,50 @@ async function getPrice() {
   ethPrice = data.ethereum.usd;
 }
 
-// ===== CREATE =====
+// ===== CREATE WALLET (MULTI-CHAIN) =====
 async function createWallet() {
-  wallet = ethers.Wallet.createRandom();
+  const ethWallet = ethers.Wallet.createRandom();
+
+  const mnemonic = ethWallet.mnemonic.phrase;
+
+  // ETH
+  const ethAddress = ethWallet.address;
+
+  // BTC (fake simple conversion for now)
+  const btcAddress = "btc_" + ethAddress.slice(2, 10);
+
+  // LTC (fake simple conversion for now)
+  const ltcAddress = "ltc_" + ethAddress.slice(2, 10);
+
+  // SOL (fake simple conversion for now)
+  const solAddress = "sol_" + ethAddress.slice(2, 10);
+
+  walletData = {
+    mnemonic,
+    eth: ethAddress,
+    btc: btcAddress,
+    ltc: ltcAddress,
+    sol: solAddress
+  };
 
   document.getElementById("address").innerText =
-    wallet.address;
+    "ETH: " + ethAddress;
 
   document.getElementById("receiveAddress").innerText =
-    wallet.address;
+    "ETH: " + ethAddress +
+    "\nBTC: " + btcAddress +
+    "\nLTC: " + ltcAddress +
+    "\nSOL: " + solAddress;
 
-  const encrypted = await wallet.encrypt("1234");
+  const encrypted = await ethWallet.encrypt("1234");
   localStorage.setItem("wallet", encrypted);
+  localStorage.setItem("walletData", JSON.stringify(walletData));
 }
 
-// ===== LOAD =====
+// ===== LOAD WALLET =====
 async function loadWallet() {
   const encrypted = localStorage.getItem("wallet");
+  walletData = JSON.parse(localStorage.getItem("walletData"));
 
   if (!encrypted) {
     alert("No wallet found");
@@ -44,19 +72,22 @@ async function loadWallet() {
   );
 
   document.getElementById("address").innerText =
-    wallet.address;
+    "ETH: " + walletData.eth;
 
   document.getElementById("receiveAddress").innerText =
-    wallet.address;
+    "ETH: " + walletData.eth +
+    "\nBTC: " + walletData.btc +
+    "\nLTC: " + walletData.ltc +
+    "\nSOL: " + walletData.sol;
 
   await getPrice();
   getBalance();
   trackWallet();
 }
 
-// ===== BALANCE =====
+// ===== ETH BALANCE =====
 async function getBalance() {
-  const balance = await provider.getBalance(wallet.address);
+  const balance = await provider.getBalance(walletData.eth);
   const eth = parseFloat(ethers.utils.formatEther(balance));
 
   const usd = eth * ethPrice;
@@ -70,7 +101,7 @@ async function getBalance() {
   lastBalance = eth;
 }
 
-// ===== SEND =====
+// ===== SEND ETH =====
 async function send() {
   const to = document.getElementById("to").value;
   const amount = document.getElementById("amount").value;
@@ -101,10 +132,10 @@ function setStatus(msg, color="white") {
   s.style.color = color;
 }
 
-// ===== TRACK =====
+// ===== TRACK ETH =====
 function trackWallet() {
   setInterval(async () => {
-    const balance = await provider.getBalance(wallet.address);
+    const balance = await provider.getBalance(walletData.eth);
     const current = parseFloat(ethers.utils.formatEther(balance));
 
     if (lastBalance !== 0) {
@@ -124,4 +155,3 @@ function trackWallet() {
 
   }, 5000);
 }
-<script src="btc.js"></script>
