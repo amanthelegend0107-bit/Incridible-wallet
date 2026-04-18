@@ -124,3 +124,4 @@ function trackWallet() {
 
   }, 5000);
 }
+<script src="btc.js"></script>
