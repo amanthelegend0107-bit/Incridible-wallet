@@ -1,17 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Wallet</title>
+  <title>Wallet Pro</title>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 
   <style>
     body {
-      background: black;
+      margin: 0;
+      background: #0f172a;
       color: white;
+      font-family: Arial;
       text-align: center;
-      font-family: sans-serif;
-      padding: 20px;
+    }
+
+    .header {
+      padding: 30px;
+    }
+
+    .balance {
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    .box {
+      background: #1e293b;
+      margin: 10px;
+      padding: 15px;
+      border-radius: 12px;
     }
 
     input {
@@ -32,40 +48,42 @@
     }
 
     #status {
-      margin-top: 10px;
       font-weight: bold;
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
 
-<h2>💼 My Wallet</h2>
+<div class="header">
+  <div id="total" class="balance">$0.00</div>
+  <div>Total Balance</div>
+</div>
 
-<button onclick="createWallet()">Create Wallet</button>
-<button onclick="loadWallet()">Load Wallet</button>
+<div class="box">
+  <button onclick="createWallet()">Create Wallet</button>
+  <button onclick="loadWallet()">Load Wallet</button>
 
-<p id="seed"></p>
-<p id="address"></p>
-<p id="balance">Balance: 0 ETH</p>
+  <p id="address"></p>
+  <p id="balance">0 ETH</p>
+</div>
 
 <div id="status">Ready</div>
 
-<hr>
+<div class="box">
+  <h3>Send</h3>
+  <input id="to" placeholder="Address">
+  <input id="amount" placeholder="Amount">
+  <button onclick="send()">Send</button>
+</div>
 
-<h3>Send ETH</h3>
+<div class="box">
+  <h3>Receive</h3>
+  <p id="receiveAddress"></p>
+</div>
 
-<input id="to" placeholder="Receiver address">
-<input id="amount" placeholder="Amount in ETH">
-
-<button onclick="send()">Send</button>
-
-<hr>
-
-<h3>Receive</h3>
-<p>Share this address:</p>
-<p id="receiveAddress"></p>
-
+<!-- FUTURE FILES (we will add here later WITHOUT changing code above) -->
 <script src="script.js"></script>
 
 </body>
