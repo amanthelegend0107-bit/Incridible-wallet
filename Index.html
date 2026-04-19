@@ -11,30 +11,69 @@
       margin:0;
       background:#0f172a;
       color:white;
-      font-family:Arial;
+      font-family:-apple-system, Arial;
+    }
+
+    .top {
+      padding:30px 20px;
       text-align:center;
     }
 
-    .box {
-      background:#1e293b;
-      margin:10px;
-      padding:15px;
-      border-radius:12px;
+    .balance {
+      font-size:36px;
+      font-weight:bold;
     }
 
-    input, textarea {
-      width:90%;
-      padding:10px;
-      margin:5px;
-      border-radius:8px;
+    .sub {
+      color:#94a3b8;
+    }
+
+    .actions {
+      display:flex;
+      justify-content:space-around;
+      margin:20px;
+    }
+
+    .action-btn {
+      background:#1e293b;
+      padding:15px;
+      border-radius:12px;
+      width:30%;
+      text-align:center;
+    }
+
+    .assets {
+      padding:10px 20px;
+    }
+
+    .asset {
+      display:flex;
+      justify-content:space-between;
+      padding:15px;
+      background:#1e293b;
+      border-radius:12px;
+      margin-bottom:10px;
+    }
+
+    .sendBox {
+      padding:20px;
+      display:none;
+    }
+
+    input {
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      border-radius:10px;
       border:none;
     }
 
     button {
-      padding:10px;
-      margin:5px;
-      border-radius:8px;
+      width:100%;
+      padding:12px;
+      margin-top:10px;
       border:none;
+      border-radius:10px;
       background:#22c55e;
       color:white;
     }
@@ -50,57 +89,49 @@ width:100%;
 height:100%;
 background:black;
 display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
-flex-direction:column;
 z-index:9999;">
-  <h2>🔐 Enter Password</h2>
-  <input id="pass" type="password">
+  <h2>🔐 Wallet Locked</h2>
+  <input id="pass" type="password" placeholder="Password">
   <button onclick="unlock()">Unlock</button>
 </div>
 
-<h2 id="total">$0.00</h2>
-
-<div class="box">
-  <button onclick="createWallet()">Create Wallet</button>
-  <button onclick="loadWallet()">Load Wallet</button>
-
-  <p id="address"></p>
-  <p id="balance"></p>
-  <p id="btcBalance"></p>
+<!-- HEADER -->
+<div class="top">
+  <div id="total" class="balance">$0.00</div>
+  <div class="sub">Total Balance</div>
 </div>
 
-<div class="box">
-  <h3>Send ETH</h3>
+<!-- ACTIONS -->
+<div class="actions">
+  <div class="action-btn" onclick="toggleSend()">📤 Send</div>
+  <div class="action-btn" onclick="showSeed()">🔐 Backup</div>
+</div>
+
+<!-- ASSETS -->
+<div class="assets">
+  <div class="asset">
+    <span>Ethereum</span>
+    <span id="balance">0</span>
+  </div>
+
+  <div class="asset">
+    <span>Bitcoin</span>
+    <span id="btcBalance">0</span>
+  </div>
+</div>
+
+<!-- SEND -->
+<div class="sendBox" id="sendBox">
+  <h3>Send Crypto</h3>
   <input id="to" placeholder="Address">
   <input id="amount" placeholder="Amount">
   <button onclick="sendETH()">Send ETH</button>
-</div>
-
-<div class="box">
-  <h3>Send BTC</h3>
   <button onclick="sendBTC()">Send BTC</button>
 </div>
 
-<div class="box">
-  <h3>Backup / Restore</h3>
-  <button onclick="showSeed()">Show Seed</button>
-  <textarea id="seedInput"></textarea>
-  <button onclick="restoreWallet()">Restore</button>
-</div>
-
-<div id="history"></div>
-
-<div id="notify" style="
-position:fixed;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-background:#22c55e;
-padding:10px;
-display:none;"></div>
-
 <script src="script.js"></script>
-
 </body>
 </html>
