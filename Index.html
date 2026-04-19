@@ -84,8 +84,38 @@
   <p id="balance">0 ETH</p>
 </div>
 
-<div id="status">Ready</div>
-
 <div class="box">
   <h3>Send ETH</h3>
-  <input id="to" placeholder
+  <input id="to" placeholder="Receiver address">
+  <input id="amount" placeholder="Amount">
+  <button onclick="send()">Send</button>
+</div>
+
+<div class="box">
+  <h3>Receive</h3>
+  <p id="receiveAddress"></p>
+</div>
+
+<div class="box">
+  <h3>Transactions</h3>
+  <div id="history"></div>
+</div>
+
+<!-- 🔔 NOTIFICATION -->
+<div id="notify" style="
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #22c55e;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  display: none;
+  font-weight: bold;
+"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
