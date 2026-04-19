@@ -5,6 +5,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/dist/bitcoinjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     body {
@@ -53,6 +54,11 @@
       background:#1e293b;
       border-radius:12px;
       margin-bottom:10px;
+      transition:0.2s;
+    }
+
+    .asset:hover {
+      transform:scale(1.02);
     }
 
     .sendBox {
@@ -82,7 +88,7 @@
 
 <body>
 
-<!-- LOCK -->
+<!-- LOCK SCREEN -->
 <div id="lockScreen" style="
 position:fixed;
 width:100%;
@@ -104,6 +110,8 @@ z-index:9999;">
   <div class="sub">Total Balance</div>
 </div>
 
+<canvas id="chart" height="100"></canvas>
+
 <!-- ACTIONS -->
 <div class="actions">
   <div class="action-btn" onclick="toggleSend()">📤 Send</div>
@@ -112,6 +120,7 @@ z-index:9999;">
 
 <!-- ASSETS -->
 <div class="assets">
+
   <div class="asset">
     <span>Ethereum</span>
     <span id="balance">0</span>
@@ -121,15 +130,20 @@ z-index:9999;">
     <span>Bitcoin</span>
     <span id="btcBalance">0</span>
   </div>
+
 </div>
+
+<h3 style="margin:10px 20px;">Tokens</h3>
+<div id="tokenList" class="assets"></div>
 
 <!-- SEND -->
 <div class="sendBox" id="sendBox">
-  <h3>Send Crypto</h3>
+  <h3>Send</h3>
   <input id="to" placeholder="Address">
   <input id="amount" placeholder="Amount">
   <button onclick="sendETH()">Send ETH</button>
   <button onclick="sendBTC()">Send BTC</button>
+  <button onclick="sendUSDT()">Send USDT</button>
 </div>
 
 <script src="script.js"></script>
