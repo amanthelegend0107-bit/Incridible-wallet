@@ -2,31 +2,48 @@ let wallet;
 let btcData;
 let ethPrice = 0;
 let btcPrice = 0;
+let lockTimer;
 
-// LOCK
-window.onload = () => {
-  document.getElementById("lockScreen").style.display = "flex";
-};
+// AUTO LOCK
+function resetLockTimer() {
+  clearTimeout(lockTimer);
+  lockTimer = setTimeout(() => {
+    document.getElementById("lockScreen").style.display = "flex";
+    wallet = null;
+  }, 60000);
+}
 
-// PASSWORD
-async function hash(pass) {
-  const enc = new TextEncoder().encode(pass);
+document.onclick = resetLockTimer;
+document.onkeydown = resetLockTimer;
+
+// HASH
+async function hash(pass, salt) {
+  const enc = new TextEncoder().encode(pass + salt);
   const buf = await crypto.subtle.digest("SHA-256", enc);
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
+// UNLOCK
 async function unlock() {
   const input = document.getElementById("pass").value;
   const saved = localStorage.getItem("pass");
 
   if (!saved) {
-    localStorage.setItem("pass", await hash(input));
+    const salt = Math.random().toString(36);
+    const hashed = await hash(input, salt);
+    localStorage.setItem("pass", hashed);
+    localStorage.setItem("salt", salt);
     document.getElementById("lockScreen").style.display = "none";
+    resetLockTimer();
     return;
   }
 
-  if (await hash(input) === saved) {
+  const salt = localStorage.getItem("salt");
+
+  if (await hash(input, salt) === saved) {
     document.getElementById("lockScreen").style.display = "none";
+    loadWallet();
+    resetLockTimer();
   } else {
     alert("Wrong password");
   }
@@ -44,7 +61,6 @@ async function createWallet() {
   localStorage.setItem("wallet", encrypted);
   localStorage.setItem("seed", mnemonic);
 
-  // BTC
   const key = bitcoin.ECPair.makeRandom();
   btcData = {
     address: bitcoin.payments.p2pkh({ pubkey: key.publicKey }).address,
@@ -53,12 +69,13 @@ async function createWallet() {
 
   localStorage.setItem("btc", JSON.stringify(btcData));
 
-  alert("SAVE SEED:\n" + mnemonic);
+  alert("SAVE THIS SEED:\n" + mnemonic);
 }
 
 // LOAD
 async function loadWallet() {
   const enc = localStorage.getItem("wallet");
+  if (!enc) return;
 
   wallet = await ethers.Wallet.fromEncryptedJson(
     enc,
@@ -66,8 +83,6 @@ async function loadWallet() {
   );
 
   btcData = JSON.parse(localStorage.getItem("btc"));
-
-  document.getElementById("address").innerText = wallet.address;
 
   getPrices();
   updateAll();
@@ -79,37 +94,34 @@ async function getPrices() {
     "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin&vs_currencies=usd"
   );
   const d = await res.json();
-
   ethPrice = d.ethereum.usd;
   btcPrice = d.bitcoin.usd;
 }
 
 // BALANCES
 async function updateAll() {
-  // ETH
-  const bal = await new ethers.providers.JsonRpcProvider(
-    "https://rpc.ankr.com/eth"
-  ).getBalance(wallet.address);
+  if (!wallet) return;
 
+  const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth");
+
+  const bal = await provider.getBalance(wallet.address);
   const eth = parseFloat(ethers.utils.formatEther(bal));
-  document.getElementById("balance").innerText = eth + " ETH";
 
-  // BTC
+  document.getElementById("balance").innerText = eth.toFixed(4);
+
   const res = await fetch(
     "https://api.blockcypher.com/v1/btc/main/addrs/" +
-      btcData.address +
-      "/balance"
+    btcData.address +
+    "/balance"
   );
   const data = await res.json();
 
   const btc = data.final_balance / 100000000;
-  document.getElementById("btcBalance").innerText = btc + " BTC";
 
-  // TOTAL
+  document.getElementById("btcBalance").innerText = btc.toFixed(6);
+
   const total = eth * ethPrice + btc * btcPrice;
-
-  document.getElementById("total").innerText =
-    "$" + total.toFixed(2);
+  document.getElementById("total").innerText = "$" + total.toFixed(2);
 }
 
 // SEND ETH
@@ -117,16 +129,16 @@ async function sendETH() {
   const to = document.getElementById("to").value;
   const amount = document.getElementById("amount").value;
 
-  const tx = await wallet
-    .connect(new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth"))
-    .sendTransaction({
-      to,
-      value: ethers.utils.parseEther(amount)
-    });
+  const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth");
+
+  const tx = await wallet.connect(provider).sendTransaction({
+    to,
+    value: ethers.utils.parseEther(amount)
+  });
 
   await tx.wait();
-
-  notify("Sent ETH");
+  alert("ETH Sent");
+  updateAll();
 }
 
 // BTC FEE
@@ -146,8 +158,8 @@ async function sendBTC() {
 
   const res = await fetch(
     "https://api.blockcypher.com/v1/btc/main/addrs/" +
-      btcData.address +
-      "?unspentOnly=true&includeScript=true"
+    btcData.address +
+    "?unspentOnly=true&includeScript=true"
   );
 
   const utxo = await res.json();
@@ -166,7 +178,6 @@ async function sendBTC() {
         value: tx.value
       }
     });
-
     total += tx.value;
   }
 
@@ -190,34 +201,19 @@ async function sendBTC() {
     body: JSON.stringify({ tx: hex })
   });
 
-  notify("Sent BTC");
+  alert("BTC Sent");
+  updateAll();
+}
+
+// UI
+function toggleSend() {
+  const box = document.getElementById("sendBox");
+  box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
 // SEED
 function showSeed() {
-  alert(localStorage.getItem("seed"));
-}
-
-async function restoreWallet() {
-  const seed = document.getElementById("seedInput").value;
-
-  wallet = ethers.Wallet.fromMnemonic(seed);
-
-  const encrypted = await wallet.encrypt(
-    document.getElementById("pass").value
-  );
-
-  localStorage.setItem("wallet", encrypted);
-  localStorage.setItem("seed", seed);
-
-  alert("Restored");
-}
-
-// NOTIFY
-function notify(msg) {
-  const n = document.getElementById("notify");
-  n.innerText = msg;
-  n.style.display = "block";
-
-  setTimeout(() => (n.style.display = "none"), 2000);
+  if (confirm("Show seed phrase?")) {
+    alert(localStorage.getItem("seed"));
+  }
 }
