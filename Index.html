@@ -46,15 +46,30 @@
       background: #22c55e;
       color: white;
     }
-
-    #status {
-      font-weight: bold;
-      margin-top: 10px;
-    }
   </style>
 </head>
 
 <body>
+
+<!-- 🔐 LOCK SCREEN -->
+<div id="lockScreen" style="
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:black;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+">
+  <h2>🔐 Enter Password</h2>
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="unlock()">Unlock</button>
+</div>
 
 <div class="header">
   <div id="total" class="balance">$0.00</div>
@@ -73,39 +88,4 @@
 
 <div class="box">
   <h3>Send ETH</h3>
-  <input id="to" placeholder="Receiver address">
-  <input id="amount" placeholder="Amount">
-  <button onclick="send()">Send</button>
-</div>
-
-<div class="box">
-  <h3>Receive</h3>
-  <p id="receiveAddress"></p>
-</div>
-
-<script src="script.js"></script>
-
-</body>
-  <div id="notify" style="
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #22c55e;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 10px;
-  display: none;
-  font-weight: bold;
-  z-index: 999;
-">
-</div></html>
-<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.4/dist/index.browser.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bitcoinjs-lib@6.1.0/dist/bitcoinjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.2/lib/index.iife.min.js"></script>
-
-<script src="core.js"></script>
-<div class="box">
-  <h3>Transactions</h3>
-  <div id="history"></div>
-</div>
+  <input id="to" placeholder
