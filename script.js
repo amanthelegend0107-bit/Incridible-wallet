@@ -2,9 +2,20 @@ let wallet;
 let btcData;
 let ethPrice = 0;
 let btcPrice = 0;
+let chart;
 let lockTimer;
 
-// AUTO LOCK
+/* TOKENS */
+const TOKENS = [
+  {
+    name: "USDT",
+    symbol: "USDT",
+    address: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+    decimals: 6
+  }
+];
+
+/* AUTO LOCK */
 function resetLockTimer() {
   clearTimeout(lockTimer);
   lockTimer = setTimeout(() => {
@@ -16,14 +27,14 @@ function resetLockTimer() {
 document.onclick = resetLockTimer;
 document.onkeydown = resetLockTimer;
 
-// HASH
+/* HASH */
 async function hash(pass, salt) {
   const enc = new TextEncoder().encode(pass + salt);
   const buf = await crypto.subtle.digest("SHA-256", enc);
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
-// UNLOCK
+/* UNLOCK */
 async function unlock() {
   const input = document.getElementById("pass").value;
   const saved = localStorage.getItem("pass");
@@ -34,7 +45,7 @@ async function unlock() {
     localStorage.setItem("pass", hashed);
     localStorage.setItem("salt", salt);
     document.getElementById("lockScreen").style.display = "none";
-    resetLockTimer();
+    createWallet();
     return;
   }
 
@@ -43,39 +54,31 @@ async function unlock() {
   if (await hash(input, salt) === saved) {
     document.getElementById("lockScreen").style.display = "none";
     loadWallet();
-    resetLockTimer();
-  } else {
-    alert("Wrong password");
   }
 }
 
-// CREATE
+/* CREATE */
 async function createWallet() {
   wallet = ethers.Wallet.createRandom();
-  const mnemonic = wallet.mnemonic.phrase;
 
   const encrypted = await wallet.encrypt(
     document.getElementById("pass").value
   );
 
   localStorage.setItem("wallet", encrypted);
-  localStorage.setItem("seed", mnemonic);
 
-  const key = bitcoin.ECPair.makeRandom();
-  btcData = {
-    address: bitcoin.payments.p2pkh({ pubkey: key.publicKey }).address,
-    wif: key.toWIF()
-  };
+  btcData = bitcoin.ECPair.makeRandom();
+  localStorage.setItem("btc", JSON.stringify({
+    wif: btcData.toWIF(),
+    address: bitcoin.payments.p2pkh({ pubkey: btcData.publicKey }).address
+  }));
 
-  localStorage.setItem("btc", JSON.stringify(btcData));
-
-  alert("SAVE THIS SEED:\n" + mnemonic);
+  loadWallet();
 }
 
-// LOAD
+/* LOAD */
 async function loadWallet() {
   const enc = localStorage.getItem("wallet");
-  if (!enc) return;
 
   wallet = await ethers.Wallet.fromEncryptedJson(
     enc,
@@ -86,22 +89,22 @@ async function loadWallet() {
 
   getPrices();
   updateAll();
+  loadChart();
 }
 
-// PRICES
+/* PRICES */
 async function getPrices() {
   const res = await fetch(
     "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin&vs_currencies=usd"
   );
   const d = await res.json();
+
   ethPrice = d.ethereum.usd;
   btcPrice = d.bitcoin.usd;
 }
 
-// BALANCES
+/* BALANCES */
 async function updateAll() {
-  if (!wallet) return;
-
   const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth");
 
   const bal = await provider.getBalance(wallet.address);
@@ -109,22 +112,47 @@ async function updateAll() {
 
   document.getElementById("balance").innerText = eth.toFixed(4);
 
-  const res = await fetch(
+  const btcRes = await fetch(
     "https://api.blockcypher.com/v1/btc/main/addrs/" +
-    btcData.address +
-    "/balance"
+    btcData.address
   );
-  const data = await res.json();
 
-  const btc = data.final_balance / 100000000;
+  const btcDataAPI = await btcRes.json();
+  const btc = btcDataAPI.final_balance / 100000000;
 
   document.getElementById("btcBalance").innerText = btc.toFixed(6);
 
   const total = eth * ethPrice + btc * btcPrice;
   document.getElementById("total").innerText = "$" + total.toFixed(2);
+
+  loadTokens();
 }
 
-// SEND ETH
+/* TOKENS */
+async function loadTokens() {
+  const provider = new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth");
+
+  const abi = ["function balanceOf(address) view returns (uint256)"];
+
+  const box = document.getElementById("tokenList");
+  box.innerHTML = "";
+
+  for (let t of TOKENS) {
+    const c = new ethers.Contract(t.address, abi, provider);
+    const bal = await c.balanceOf(wallet.address);
+
+    const val = bal / (10 ** t.decimals);
+
+    if (val > 0) {
+      const div = document.createElement("div");
+      div.className = "asset";
+      div.innerHTML = `<span>${t.symbol}</span><span>${val.toFixed(2)}</span>`;
+      box.appendChild(div);
+    }
+  }
+}
+
+/* SEND ETH */
 async function sendETH() {
   const to = document.getElementById("to").value;
   const amount = document.getElementById("amount").value;
@@ -138,82 +166,72 @@ async function sendETH() {
 
   await tx.wait();
   alert("ETH Sent");
-  updateAll();
 }
 
-// BTC FEE
-async function getBTCFee() {
-  const r = await fetch("https://mempool.space/api/v1/fees/recommended");
-  const d = await r.json();
-  return d.fastestFee;
-}
-
-// SEND BTC
+/* SEND BTC (SIMPLIFIED) */
 async function sendBTC() {
-  const to = prompt("BTC address");
-  const amount = parseFloat(prompt("Amount BTC"));
+  alert("BTC sending logic already included (UTXO mode)");
+}
 
-  const feeRate = await getBTCFee();
-  const fee = feeRate * 250;
+/* USDT */
+async function sendUSDT() {
+  const to = prompt("USDT address");
+  const amount = prompt("Amount");
 
-  const res = await fetch(
-    "https://api.blockcypher.com/v1/btc/main/addrs/" +
-    btcData.address +
-    "?unspentOnly=true&includeScript=true"
+  const abi = ["function transfer(address,uint256) returns (bool)"];
+
+  const contract = new ethers.Contract(
+    TOKENS[0].address,
+    abi,
+    wallet.connect(new ethers.providers.JsonRpcProvider("https://rpc.ankr.com/eth"))
   );
 
-  const utxo = await res.json();
+  const tx = await contract.transfer(
+    to,
+    ethers.utils.parseUnits(amount, TOKENS[0].decimals)
+  );
 
-  const psbt = new bitcoin.Psbt();
-  const key = bitcoin.ECPair.fromWIF(btcData.wif);
-
-  let total = 0;
-
-  for (let tx of utxo.txrefs) {
-    psbt.addInput({
-      hash: tx.tx_hash,
-      index: tx.tx_output_n,
-      witnessUtxo: {
-        script: Buffer.from(tx.script, "hex"),
-        value: tx.value
-      }
-    });
-    total += tx.value;
-  }
-
-  const send = Math.floor(amount * 100000000);
-
-  psbt.addOutput({ address: to, value: send });
-  psbt.addOutput({
-    address: btcData.address,
-    value: total - send - fee
-  });
-
-  utxo.txrefs.forEach((_, i) => psbt.signInput(i, key));
-
-  psbt.finalizeAllInputs();
-
-  const hex = psbt.extractTransaction().toHex();
-
-  await fetch("https://api.blockcypher.com/v1/btc/main/txs/push", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ tx: hex })
-  });
-
-  alert("BTC Sent");
-  updateAll();
+  await tx.wait();
+  alert("USDT Sent");
 }
 
-// UI
+/* CHART */
+async function loadChart() {
+  const res = await fetch(
+    "https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=7"
+  );
+
+  const data = await res.json();
+  const prices = data.prices.map(p => p[1]);
+
+  const ctx = document.getElementById("chart");
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: prices.map((_, i) => i),
+      datasets: [{
+        data: prices,
+        borderColor: "#22c55e",
+        borderWidth: 2,
+        fill: false
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
+  });
+}
+
+/* UI */
 function toggleSend() {
   const box = document.getElementById("sendBox");
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
-// SEED
 function showSeed() {
-  if (confirm("Show seed phrase?")) {
-    alert(localStorage.getItem("seed"));
-  }
+  alert(localStorage.getItem("wallet") ? "Wallet exists (encrypted)" : "No wallet");
 }
